@@ -1,0 +1,21 @@
+.pio
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/settings.json
+.lib
+*.workspace
+*.bak
+zipDataFolder.py
+
+
+# Temporary files
+*.000
+*.bak
+*.bck
+*~
+_autosave-*
+*.tmp
+
+# Exported BOM files
+*.xml
+*.csv
