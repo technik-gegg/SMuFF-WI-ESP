@@ -53,9 +53,12 @@ Please keep in mind: for PULSE one **must** define an Hue value (a number betwee
 
 This set of commands is addressing the spare UART port, which runs on Software Serial and is initialized to 19200 Baud.
 
+>**Please notice:** If you need to send text messages to the spare UART port - say because you have a different device connected to it listening to said messages - you have to disable printing out debug messages first (see down below command **DBG:OFF**). Otherwise the debug messages may mess up the communication.
+
 |Command|Function|Parameter
 |---|---|---
 |SEND|Sends a string to the UART port.|String to be sent (add a **\n** for a newline in between).
+|*RECEIVE*|**Not implemented yet**|-
 
 ## DBG
 
@@ -69,8 +72,8 @@ This set of commands is addressing the spare UART port, which runs on Software S
 
 |Command|Function|Parameter
 |---|---|---
-|ON| Enables sending messages comming from SMuFF to the UART port.|-
-|OFF| Disabled sending messages comming from SMuFF to the UART port.|-
+|ON| Enables passing messages comming from the SMuFF to the UART port.|-
+|OFF| Disabled passing messages comming from the SMuFF to the UART port.|-
 
 ## ESP
 
