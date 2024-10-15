@@ -88,5 +88,5 @@ This set of commands is addressing the spare UART port, which runs on Software S
 
 |Command|Function
 |---|---
-|INFO| Shows information about the Wi-ESP firmware.
+|INFO| Shows information about the WI-ESP firmware.
 |WIFI| Shows information about the WiFi state.

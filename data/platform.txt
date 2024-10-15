@@ -1,1 +1,1 @@
-Running on SMuFF-WI-ESP (D1 Mini ESP8266)
+Running locally on SMuFF-WI-ESP

@@ -12,7 +12,6 @@
 #include "Adafruit_NeoPixel.h"
 #include "lib8tion/lib8tion.h"
 
-#define VERSION         "1.0.0"
 #if defined(ESP32)
 #define MCUTYPE         "ESP32"
 #else
@@ -68,10 +67,11 @@ extern int              numLeds;
 extern Adafruit_NeoPixel*  neoPixels;
 extern bool             isPulsing;
 extern uint16_t         pulseBPM;
+extern uint16_t         pulseBPMslow;
 extern uint16_t         pulseBPMfast;
-extern uint16_t         pulseBPMprev;
 extern uint16_t         pulseColor;
 extern uint16_t         hueMap[];
+extern const char       cmdWI[];
 
 typedef enum {
   HUE_WHITE     = 0,
@@ -101,3 +101,4 @@ extern int  __debugESP(const char* fmt, va_list arguments);
 extern void handleControlMessage(String msg);
 extern void initNeoPixels();
 extern void setNeoPixelPulsing();
+extern void setNeoPixelPulsing(int num);

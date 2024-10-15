@@ -37,9 +37,8 @@ void handleLog(String cmd);
 void handleESP(String cmd);
 void handleSystem(String cmd);
 void sendResponse(const char* fmt, ...);
-void sendParamErrResponse(const char* cmd, int got, int expected);
 void sendUnknownCmdResponse(const char* cmd, const char* got);
-String translateParamType(ParamObject::ParamType type);
+const char* translateParamType(ParamObject::ParamType type);
 
 Adafruit_NeoPixel*  neoPixels;
 int                 numLeds = 0;
@@ -49,10 +48,11 @@ static String       okString = String("ok\n");
 ParamObject         firstParam;
 ParamObject         secondParam;
 
-#define HEAT_COLOR      hueMap[8]   // Red
+#define HEAT_COLOR      hueMap[2]   // Yellow
 #define HEATING_COLOR   hueMap[8]   // Red
 #define COOL_COLOR      hueMap[5]   // Blue
 
+const char cmdWI[] PROGMEM      = { "WI-CMD:" };
 const char cmdNPX[] PROGMEM     = { "NPX:" };
 const char cmdUART[] PROGMEM    = { "UART:" };
 const char cmdDBG[] PROGMEM     = { "DBG:" };
@@ -80,8 +80,16 @@ const char fncSEND[] PROGMEM    = { "SEND" };
 const char fncWIFI[] PROGMEM    = { "WIFI" };
 const char fncMEM[] PROGMEM     = { "MEM" };
 
+const char ptNone[] PROGMEM     = { "None" };
+const char ptByte[] PROGMEM     = { "Byte" };
+const char ptInt[] PROGMEM      = { "Integer" };
+const char ptHex[] PROGMEM      = { "Hex" };
+const char ptBin[] PROGMEM      = { "Binary" };
+const char ptStr[] PROGMEM      = { "String" };
+const char ptUnknown[] PROGMEM  = { "<Unknown>" };
+
+
 const char errNoColor[] PROGMEM         = { "No valid color value found!" };
-const char errParamError[] PROGMEM      = { "'%s' parameter error (got %d, expected %d)" };
 const char errParamTypeError[] PROGMEM  = { "'%s' parameter '%s' type error. Expected: %s Got: %s" };
 const char errOutOfRange[] PROGMEM      = { "'%s' parameter '%s' out of range error. Min=%d, Max=%d, Got: %d" };
 const char errUnknownCmd[] PROGMEM      = { "Unknown command received: \"%s\n" };
@@ -121,27 +129,25 @@ void sendUnknownCmdResponse(const char* cmd, const char* got) {
     sendResponse(errUnknownFunc, got, cmd);
 }
 
-void sendParamErrResponse(const char* cmd, int got, int expected) {
-    sendResponse(errParamError, cmd, got, expected);
-}
-
 void sendRangeErrResponse(const char* cmd, const char* param, int min, int max, int got) {
     sendResponse(errOutOfRange, cmd, param, min, max, got);
 }
 
 void sendParamWrongTypeResponse(const char* cmd, const char* param, ParamObject::ParamType expected, ParamObject::ParamType got) {
-    sendResponse(errParamTypeError, cmd, param, translateParamType(expected).c_str(), translateParamType(got).c_str());
+    sendResponse(errParamTypeError, cmd, param, translateParamType(expected), translateParamType(got));
 }
 
+static char wi_resp[2048];
+
 void sendResponse(const char* fmt, ...) {
-    char resp[2048];
+    memset(wi_resp, 0, ArraySize(wi_resp));
     va_list arguments;
     va_start(arguments, fmt);
-    vsnprintf_P(resp, ArraySize(resp) - 1, fmt, arguments);
+    vsnprintf_P(wi_resp, ArraySize(wi_resp) - 1, fmt, arguments);
     va_end(arguments);
-    strcat(resp,"\n");
+    strcat(wi_resp,"\n");
 
-    String tmp = String(PSTR("echo: WI-ESP:\n")) + String(resp);
+    String tmp = String(PSTR("echo: WI-ESP:\n")) + String(wi_resp);
     sendToWebsocket(tmp);
     // __debugS(PSTR("%s"), tmp.c_str());
 }
@@ -192,10 +198,10 @@ uint32_t getNextParam(const char* params, ParamObject* param) {
 
     while(*pptr == ' ') {
         pptr++;
-        if(*pptr == 0)
+        if(*pptr == 0 || *pptr == '\n')
             break;
     }
-    if(*pptr == 0) {
+    if(*pptr == 0 || *pptr == '\n') {
         param->Type = ParamObject::ParamType::None;
         return 0;
     }
@@ -267,27 +273,28 @@ uint32_t getNextParam(const char* params, ParamObject* param) {
     }
     */
 
-    uint32_t nxtIndex = ((uint32_t)pptr-(uint32_t)params)-1;
+    uint32_t nxtIndex = strlen(pptr) == 0 ? 0 : ((uint32_t)pptr-(uint32_t)params);
     // __debugS(PSTR("NextParam: ndx=%u, next=[%s] remain=%d"), nxtIndex, (pptr == nullptr ? "(null)" : pptr), strlen(pptr));
     return nxtIndex;
 }
 
-String translateParamType(ParamObject::ParamType type) {
+const char* translateParamType(ParamObject::ParamType type) {
+    // __debugS("translateParamType: %d", type);
     switch(type) {
         case ParamObject::ParamType::None:
-            return String("None");
+            return ptNone;
         case ParamObject::ParamType::Byte:
-            return String("Byte");
+            return ptByte;
         case ParamObject::ParamType::Int:
-            return String("Integer");
+            return ptInt;
         case ParamObject::ParamType::Hex:
-            return String("Hex");
+            return ptHex;
         case ParamObject::ParamType::Bin:
-            return String("Binary");
+            return ptBin;
         case ParamObject::ParamType::String:
-            return String("String");
+            return ptStr;
     }
-    return String("<Unknown>");
+    return ptUnknown;
 }
 
 int translateColorString(char* colorByName, int32_t *color) {
@@ -449,34 +456,29 @@ void handleNeoPixel(String cmd) {
         return;
     }
     else if(strcmp_P(func, fncHEAT) == 0) {
-        // neoPixels->clear();
         pulseColor = HEAT_COLOR;
-        pulseBPM = pulseBPMprev;
+        pulseBPM = pulseBPMslow;
         isPulsing = true;
         sendResponse(PSTR("%s %s"), npxMode, fncHEAT);
         return;
     }
     else if(strcmp_P(func, fncHEATING) == 0) {
-        // neoPixels->clear();
-        pulseBPMprev = pulseBPM;
         pulseBPM = pulseBPMfast;
-        pulseColor = HEAT_COLOR;
+        pulseColor = HEATING_COLOR;
         isPulsing = true;
         sendResponse(PSTR("%s %s"), npxMode, fncHEATING);
         return;
     }
     else if(strcmp_P(func, fncCOOL) == 0) {
-        // neoPixels->clear();
         pulseColor = COOL_COLOR;
-        pulseBPM = pulseBPMprev;
+        pulseBPM = pulseBPMslow;
         isPulsing = true;
         sendResponse(PSTR("%s %s"), npxMode, fncCOOL);
         return;
     }
     else if(strcmp_P(func, fncPULSE) == 0) {
         isPulsing = false;
-        neoPixels->clear();
-        
+
         int32_t color = -1;
         int hasMoreParam;
         int res = getColorParam(pptr, &color, &hasMoreParam);
@@ -502,7 +504,6 @@ void handleNeoPixel(String cmd) {
                     if(secondParam.Value.Int < 0 || secondParam.Value.Int >= 255) {
                         sendRangeErrResponse(cmdNPX, func, 1, 255, secondParam.Value.Int);
                     }
-                    pulseBPMprev = pulseBPM;
                     pulseBPM = (uint16_t)secondParam.Value.Int;
                 }
                 else {
@@ -514,14 +515,16 @@ void handleNeoPixel(String cmd) {
         }
     }
     else if(strcmp_P(func, fncBPM) == 0) {
+        char tmp[120];
         firstParam.Value.Int = 0;
         int len = getNextParam(pptr, &firstParam);
         if(firstParam.Type == ParamObject::ParamType::Int) {
             if(firstParam.Value.Int < 0 || firstParam.Value.Int >= 255) {
                 sendRangeErrResponse(cmdNPX, func, 1, 255, firstParam.Value.Int);
             }
-            pulseBPM = (uint16_t)firstParam.Value.Int;
-            pulseBPMprev = pulseBPM;
+            pulseBPMslow = (uint16_t)firstParam.Value.Int;
+            pulseBPM = pulseBPMslow;
+            snprintf_P(tmp, ArraySize(tmp)-1, PSTR("NeoPixels BPM slow set to %d."), pulseBPMslow);
         }
         else {
             sendParamWrongTypeResponse(cmdNPX, func, ParamObject::ParamType::Int, firstParam.Type);
@@ -537,12 +540,16 @@ void handleNeoPixel(String cmd) {
                     sendRangeErrResponse(cmdNPX, func, 1, 255, secondParam.Value.Int);
                 }
                 pulseBPMfast = (uint16_t)secondParam.Value.Int;
+                char tmp2[50];
+                snprintf_P(tmp2, ArraySize(tmp2)-1, PSTR("\nNeoPixels BPM fast set to %d."), pulseBPMfast);
+                strcat(tmp, tmp2);
             }
             else {
                 sendParamWrongTypeResponse(cmdNPX, func, ParamObject::ParamType::Int, secondParam.Type);
                 return;
             }
         }
+        sendResponse(tmp);
         return;
     }
     else {

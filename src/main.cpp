@@ -51,7 +51,7 @@ unsigned long       smuffSent = 0, wiSent = 0, btSent = 0;
 RingBuf<byte, 2048> bufFromSMuFF;
 uint32_t            millisCurrent;
 uint32_t            millisLast;
-uint32_t            millisNpx;
+uint32_t            millisNpxRefresh;
 int                 btConnections = 0;
 uint16_t            chunkSize = CHUNK_SIZE;
 
@@ -77,6 +77,8 @@ void flashIntLED(int repeat, int _delay) {
     toggleIntLED();
     delay(_delay);
   }
+  delay(_delay);
+  digitalWrite(INTLED_PIN, HIGH);
 }
 
 void setup(){
@@ -117,12 +119,13 @@ void setup(){
       __debugS(PSTR("FS init...  failed"));
     }  
   #endif
+  pinMode(INTLED_PIN, OUTPUT);
+  digitalWrite(INTLED_PIN, HIGH);
   
   // __debugS(PSTR("Heap before webserver: %zu B"), ESP.getFreeHeap());
   __debugS(PSTR("Webserver init..."));
   initWebserver();
   initWebsockets();
-  pinMode(INTLED_PIN, OUTPUT);
 
   #if defined(ESP32)
     #if defined(OLED_SSD1306) || defined(OLED_SH1106) || defined(OLED_SH1107)
@@ -133,7 +136,9 @@ void setup(){
   #endif
 
   millisLast = millis();
-  flashIntLED(5);
+  millisNpxRefresh = millisLast;
+
+  flashIntLED(3);
   // NeoPixels by default set to 4 LEDs
   numLeds = DEFAULT_NUMLEDS;
   initNeoPixels();
@@ -187,7 +192,7 @@ void dumpBuffer(const T& buffer, String& ref, const char* dbg, unsigned long* cn
         ref += (char)b;
       }
 
-      // send only data with the length of CHUNK_SIZE to not overwhelm the internal buffers
+      // send only data with the max. length of CHUNK_SIZE to not overwhelm the internal buffers
       if(chunkSize == 0) {
         if(sendWS)
           sendToWebsocket(ref);
@@ -201,15 +206,11 @@ void dumpBuffer(const T& buffer, String& ref, const char* dbg, unsigned long* cn
 
     if(lineComplete) {
       ref += "\n";
-      if(ref.startsWith("WI-CMD:")) {
-        // TODO: handle specific commands, like for the SerialUART or NeoPixels
-        // e.g.:  WI-CMD:NPX:COUNT:8
-        //        WI-CMD:NPX:ON:8 FF00FF
-        //        WI-CMD:NPX:FILL: FF00FF
-        //        WI-CMD:DBG:OFF
-        //        WI-CMD:UART:SEND:Hello World\n
+      if(ref.startsWith(cmdWI)) {
+        // handle specific commands, like for the SerialUART or NeoPixels
+        // see wi-control.md for details
         handleControlMessage(String(ref.substring(7)));
-        __debugS(PSTR("%s"), ref.c_str());
+        // __debugS(PSTR("%s"), ref.c_str());
         ref.clear();
         return;
       }
@@ -226,7 +227,7 @@ void dumpBuffer(const T& buffer, String& ref, const char* dbg, unsigned long* cn
 
 void loop() { 
 
-  __systick = millis();
+  __systick = millis();           // for Adafruit NeoPixel library
   if(SerialSmuff.available()) {
     serialSmuffEvent();
   }
@@ -252,11 +253,11 @@ void loop() {
     #endif
   }
   
-  if(neoPixels != nullptr && numLeds > 0 && millis()- millisNpx > 50) {
+  if(neoPixels != nullptr && numLeds > 0 && millis()- millisNpxRefresh > 50) {
     if(isPulsing)
       setNeoPixelPulsing();
     neoPixels->show();
-    millisNpx = millis();
+    millisNpxRefresh = millis();
   }
 
 }

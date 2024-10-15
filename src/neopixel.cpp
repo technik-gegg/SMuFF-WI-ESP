@@ -20,7 +20,7 @@
 
 bool                isPulsing = false;
 uint16_t            pulseBPM = 12;
-uint16_t            pulseBPMprev = 12;
+uint16_t            pulseBPMslow = pulseBPM;
 uint16_t            pulseBPMfast = 60;
 uint16_t            pulseColor;
 volatile uint32_t   __systick;

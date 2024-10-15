@@ -44,19 +44,34 @@ This will give you a visual feedback of the heater heating / cooling state, if y
 
 For setting the device up, you have to connect your PC to the *SMuFF-WI_xxxxxx* WiFi hotspot once and allow the device to connect to your wireless network using the built-in [WiFiManager](https://github.com/tzapu/WiFiManager) via the static IP address **192.168.4.1**.
 
-As soon as you have saved your local network details and credentials, the device will restart and connect to your configured WiFi network, which eventually will assign a new IP address to it. You can query your Router/Access Point in order to retrieve the new IP address or, use some network tool and look out for a device named **SMuFF-WI_xxxxxx**.
+As soon as you have saved your local network details and credentials, the device will restart and connect to your configured WiFi network, which eventually will assign a new IP address to it. You can query your Router/Access Point in order to retrieve the new IP address or, use some network tool and look out for a device named **SMuFF-WI-ESP_xxxxxx**.
 
 Enter the new address in your browser and it'll greet you with the default [SMuFF-WI](https://github.com/technik-gegg/SMuFF-WI) startup screen.
 
 >**Hint:** If you need to connect the device to another WiFi hotspot, you'll need to reset the existing connection/credentials first.
-To do so, open the URL **http://{IP-Address}/reset?v=wifi** in your browser. This will erase the current settings and the device will go back into "Portal mode", where it sets up it's own AP that will be accessible under the IP-Address **192.168.4.1** once you've connected with the AP named *SMuFF-WI_xxxxxx*.
+To do so, open the URL **http://{IP-Address}/reset?v=wifi** in your browser. This will erase the current settings and the device will go back into "Portal mode", where it sets up it's own AP that will be accessible under the IP-Address **192.168.4.1** after you've connected your PC with the HotSpot named *SMuFF-WI-ESP_xxxxxx*.
+
+---
+
+# Updating the firmware
+
+Once you've installed the firmware SMuFF-WI-ESP sucessfully, you don't need to fire up VS-Code again in order to update the firmware / file system on updated versions.
+Just open the SMuFF-WI-ESP web interface and click on the **Update WI-ESP** button at the bottom of the page.
+It'll ask you to pick either a firmware (*firmware.bin*) or file system file (*littlefs.bin*) for upload. Select a file, click **Upload** and wait until the webpage refreshes.
+
+>**Please keep in mind:** In some cases you most probably will need to update both files.
+The most recent binaries are located in the folder named *latest_binaries*.
 
 ---
 
 # Troubleshooting
 
-If your SMuFF-WI-ESP device doesn't show the default web page for some reason, you have the option to see the debug output by attaching a TTL2USB interface (TX/GND) to pin D5/GND of the Wemos D1 mini (*see Wiring in picture above*) and view the messages sent via a Terminal app (e.g. [TeraTerm](https://teratermproject.github.io/index-en.html)), which you have to set up for **19200 Baud** on the according COM port.
+If your SMuFF-WI-ESP device doesn't show the default web page for some reason, you have two options:
 
+1. Watch the built-in LED at reset. If it flashes **10 times** (7 short, 3 long), the device is in *Portal Mode* and you need to connect your PC to the *SMuFF-WI-ESP_xxxxxx* HotSpot and access it via the local URL http://192.168.4.1. In case it flashes only **5 times** (2 short, 3 long), it's supposed to have started up correctly, already connected to your configured WiFi network.
+Also, right after this, the NeoPixels are supposed to flash once in Pink, if you have such a NeoPixel strip attached.
+
+2. If that doesn't help, you have the option to watch the debug output by attaching a TTL2USB interface (TX/GND) to pin D5/GND of the Wemos D1 mini (*see Wiring in picture above*) and view the messages sent out via a Terminal app (e.g. [TeraTerm](https://teratermproject.github.io/index-en.html)), which you have to set up for **19200 Baud** on the according COM port.
 If you're successful, you're supposed to see something like this in your Terminal app at startup:
 
 ```text

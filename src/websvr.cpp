@@ -121,12 +121,14 @@ void handleFileUpload() {
             uploadSize = upload.contentLength;
             __debugS(PSTR("Upload started with file: \"%s\" (%zu B)"), upload.filename.c_str(), uploadSize);
             #endif
+            if(neoPixels != nullptr)
+                neoPixels->clear();
             if (upload.filename == "littlefs.bin") {
                 #if !defined(ESP32)
                 close_all_fs();
                 size_t fsSize = ((size_t)FS_end - (size_t)FS_start);
                 __debugS(PSTR("Updating file system... Filesystem size: %zu B"), fsSize);
-                if (!Update.begin(fsSize, U_FS)){               //start with max available size
+                if (!Update.begin(fsSize, U_FS, INTLED_PIN, HIGH)){               //start with max available size
                     setUpdaterError();
                 }
                 #else
@@ -140,7 +142,7 @@ void handleFileUpload() {
             else if (upload.filename == "firmware.bin") {
                 uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
                 __debugS(PSTR("Updating firmware... Max. sketch space: %zu B"), maxSketchSpace);
-                if (!Update.begin(maxSketchSpace, U_FLASH)) {   //start with max available size
+                if (!Update.begin(maxSketchSpace, U_FLASH, INTLED_PIN, HIGH)) {   //start with max available size
                     setUpdaterError();
                 }
             }
@@ -168,6 +170,15 @@ void handleFileUpload() {
                         __debugS(PSTR("Uploaded: %d%%\r"), percent);
                         lastPercent = percent;
                     }
+                    if(neoPixels != nullptr) {
+                        if((percent % 25) == 0) { // && percent != lastPercent) {
+                            int num = percent / 25;
+                            //__debugS(PSTR("Npx=%d"), num);
+                            neoPixels->setPixelColor(num, 0xbf00bd);
+                        }
+                        neoPixels->show();
+                    }
+
                 }
                 #else
                     __debugS(PSTR("Uploaded: %d%%\r"), upload.totalSize);
@@ -176,6 +187,8 @@ void handleFileUpload() {
             break;
 
         case UPLOAD_FILE_END:
+            if(neoPixels != nullptr)
+                neoPixels->clear();
             if(Update.end(true)) {
                 __debugS(PSTR("Update successful, bytes written %zu"), upload.totalSize);
             } 
@@ -215,9 +228,11 @@ void initWebserver() {
     
     if(wifiMgr.autoConnect(deviceName)){
       __debugS(PSTR("WiFi connected"));
+      flashIntLED(2, 150);
     }
     else {
       __debugS(PSTR("WiFi not connected. Portal running."));
+      flashIntLED(7, 150);
       return;
     }
 
@@ -254,7 +269,7 @@ void initWebserver() {
     
 
     webServer.on("/uploadBinary", HTTP_POST, [&]() {
-        __debugS("/uploadBinary requested");
+        __debugS("Update requested...");
         
         /* UPLOAD happens here */
 
@@ -341,13 +356,16 @@ void wsEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
             }
             break;
         case WStype_TEXT: {
-                __debugS(PSTR("%s%u sent: %s"), wsCliPrefix, num, payload);
                 String cmd = String((const char*)payload);
-                if(cmd.startsWith("WI-CMD:")) {
-                    handleControlMessage(cmd.substring(7));
+                __debugS(PSTR("%s%u sent: %s"), wsCliPrefix, num, cmd.c_str());
+                if(cmd.startsWith(cmdWI)) {
+                    if(cmd.length() > 7)
+                        handleControlMessage(cmd.substring(7));
+                    else
+                        __debugS("Malformed WI-CMD!");
                 }
                 else {
-                    SerialSmuff.write((char *)payload);
+                    SerialSmuff.write(cmd.c_str());
                     wiSent++;
                 }
             }
