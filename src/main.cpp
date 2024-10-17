@@ -17,7 +17,6 @@
  *
  */
 #include "Config.h"
-#include <RingBuf.h>
 
 #define CHUNK_SIZE  250                           // max. number of bytes sent at one go over web-socket
 
@@ -25,7 +24,7 @@ StringStream        debugOut;
 bool                debugToUART = true;
 bool                logToUART = false;
 bool                debugMemInfo = false;
-
+bool                isPinging = false;
 HardwareSerial      SerialSmuff(0);               // this one is mandatory!
 
 #if defined(ESP32)
@@ -171,6 +170,24 @@ void serialBTEvent() {
 }
 #endif
 
+void getStringFromBuffer(String& ref) {
+    if(bufFromSMuFF.isEmpty()) {
+      ref.clear();
+      return;
+    }
+    bool stat = true;
+    do {
+      byte b;
+      if((stat = (bool)bufFromSMuFF.lockedPop(b))) {
+        if(b=='\n')
+          break;
+        ref += (char)b;
+      }
+      else
+        break;
+    } while (stat);
+}
+
 template<class T>
 void dumpBuffer(const T& buffer, String& ref, const char* dbg, unsigned long* cntRef, bool sendWS = false) {
     if(buffer->isEmpty())
@@ -228,6 +245,7 @@ void dumpBuffer(const T& buffer, String& ref, const char* dbg, unsigned long* cn
 void loop() { 
 
   __systick = millis();           // for Adafruit NeoPixel library
+
   if(SerialSmuff.available()) {
     serialSmuffEvent();
   }
@@ -238,7 +256,7 @@ void loop() {
   #endif
 
 
-  if(!bufFromSMuFF.isEmpty())
+  if(!bufFromSMuFF.isEmpty() && !isPinging)
     dumpBuffer(&bufFromSMuFF, fromSMuFF, PSTR("SMuFF"), &smuffSent, true);
 
   loopWebserver();

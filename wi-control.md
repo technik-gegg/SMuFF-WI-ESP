@@ -1,16 +1,19 @@
 # WI-ESP Control Commands
 
 WI-ESP comes with it's own set of commands, which can be used to control some of the functions built in. These commands are being sent through the WI Console, but instead of being passed to the SMuFF, they'll get evaluated locally on the ESP device. All such commands must start with the prefix **WI-CMD:** For example:
->WI-CMD:NPX:COUNT:8
-WI-CMD:NPX:FILL: FF00FF
+
+```text
+WI-CMD:NPX:COUNT:8
+WI-CMD:NPX:FILL:#FF00FF
 WI-CMD:DBG:OFF
 WI-CMD:SYS:INFO
 WI-CMD:ESP:INFO
 WI-CMD:UART:SEND:Hello World\n
+```
 
 To keep parsing simple, those commands (and it's parameter) need to be all upper case. Parameter are either of type **Integer**, **Hex** or **String** and must be separated by blanks.
 
-Responses from the WI-ESP (if available) will be displayed in the Console window, starting with the prefix "**echo: WI-CMD:**" and ending up with the string "**ok**".
+Responses from the WI-ESP (if available) will be displayed in the Console window, starting with the prefix "**echo: WI-ESP:**" and ending up with the string "**ok**".
 
 Here's now a list of WI-ESP control commands the device will handle:
 
@@ -39,15 +42,15 @@ Please keep in mind: for PULSE one **must** define an Hue value (a number betwee
 
 |Color|Name| Hue Value
 |:---:|---|:---:
-|<span style='background-color: #ffffff; color: #ffffff;border: 1px solid #333;'>XXX</span>|WHITE| 0
-|<span style='background-color: #ffa500; color: #ffa500;'>XXX</span>|ORANGE| 1
-|<span style='background-color: #ffff00; color: #ffff00;'>XXX</span>|YELLOW| 2
-|<span style='background-color: #7cfc00; color: #7cfc00;'>XXX</span>|GREEN| 3
-|<span style='background-color: #00ffff; color: #00ffff;'>XXX</span>|CYAN| 4
-|<span style='background-color: #4169f1; color: #4169f1;'>XXX</span>|BLUE| 5
-|<span style='background-color: #ba55d3; color: #ba55d3;'>XXX</span>|PURPLE| 6
-|<span style='background-color: #ff00ff; color: #ff00ff;'>XXX</span>|PINK| 7
-|<span style='background-color: #ff0000; color: #ff0000;'>XXX</span>|RED| 8
+|![White](/images/white.png)|WHITE| 0
+|![Orange](/images/orange.png)|ORANGE| 1
+|![Yellow](/images/yellow.png)|YELLOW| 2
+|![Green](/images/green.png)|GREEN| 3
+|![Cyan](/images/cyan.png)|CYAN| 4
+|![Blue](/images/blue.png)|BLUE| 5
+|![Purple](/images/purple.png)|PURPLE| 6
+|![Pink](/images/pink.png)|PINK| 7
+|![Red](/images/red.png)|RED| 8
 
 ## UART
 

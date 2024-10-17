@@ -20,7 +20,7 @@ For the very first build you also need to execute the *Upload Filesystem Image*,
 >**Keep in mind:** You will need to upload the *Filesystem Image* each time the WebInterface is getting updated.
 **However,** once you've flashed the firmware/file system successfully onto the device, you'll be able to upload the binaries directly via the integrated web-interface. With future updates there's no need to fire up VS-Code / PlatformIO as long as you've got those said binaries.
 
-[![Open in VS-Code](https://open.vscode.dev/badges/open-in-vscode.svg)](https://open.vscode.dev/technik-gegg/SMuFF-WI-ESP/master)
+[Open in VS-Code](https://vscode.dev/github/technik-gegg/SMuFF-WI-ESP?vscode-lang=en)
 
 ---
 
@@ -93,5 +93,19 @@ WebSocketsServer running
 ---
 
 ## Recent changes
+
+**1.0.2** - minor update
+
+- added SMuFF-WI-ESP MCU type & FW version as well as SMuFF detection to the start page
+![Info](images/Startpage1.png)
+- added zoom/pan to the Sensor1/Sensor2 charts (Filament Dryer)
+- corrected a few typos in README.md
+- corrected formatting in [wi-control.md](/wi-control.md)
+
+**1.0.1** - minor update
+
+- added *latest_binaries* folder for updating the device OTA
+- added onboard LED status info at startup (see [Troubleshooting](#Troubleshooting))
+- fixed some random crashes
 
 **1.0.0** - Initial commit

@@ -4,6 +4,7 @@
 #include <LittleFS.h>
 #include <WiFiManager.h>
 #include "StringStream.h"
+#include <RingBuf.h>
 #if defined(ESP32)
 #include <BluetoothSerial.h>
 #else
@@ -58,11 +59,13 @@ extern HardwareSerial   SerialUART;
 extern EspSoftwareSerial::UART SerialUART;
 #endif
 extern StringStream     debugOut;
+extern RingBuf<byte, 2048> bufFromSMuFF;
 extern unsigned long    smuffSent, wiSent, btSent;
 extern int              btConnections;
 extern bool             debugToUART;
 extern bool             logToUART;
 extern bool             debugMemInfo;
+extern bool             isPinging;
 extern int              numLeds;
 extern Adafruit_NeoPixel*  neoPixels;
 extern bool             isPulsing;
@@ -102,3 +105,5 @@ extern void handleControlMessage(String msg);
 extern void initNeoPixels();
 extern void setNeoPixelPulsing();
 extern void setNeoPixelPulsing(int num);
+extern void serialSmuffEvent();
+extern void getStringFromBuffer(String& ref);

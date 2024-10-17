@@ -246,8 +246,40 @@ void initWebserver() {
 
     httpUpdateServer.setup(&webServer);
 
+    webServer.on("/info", HTTP_GET, []() {
+        // __debugS(PSTR("/info requested; URI: %s"),webServer.uri().c_str());
+        char info[60];
+        String response, smuffVersion = "No SMuFF attached.";
+        __debugS(PSTR("Pinging SMuFF..."));
+        isPinging = true;
+        SerialSmuff.write("M155S0\n");
+        delay(250);
+        if(SerialSmuff.available()) {
+            serialSmuffEvent();
+            bufFromSMuFF.clear();
+            SerialSmuff.write("M115\n");
+            delay(250);
+            if(SerialSmuff.available()) {
+                serialSmuffEvent();
+                getStringFromBuffer(response);
+                isPinging = false;
+                if(response.length() > 0) {
+                    __debugS(PSTR("SMuFF responded with: %s"), response.c_str());
+                    int pos1 =  response.indexOf("FIRMWARE_VERSION:");
+                    if(pos1 > -1) {
+                        int pos2 = response.indexOf(" ", pos1+19);
+                        if(pos2 > -1)
+                            smuffVersion = "SMuFF "+ response.substring(pos1+18, pos2) + " attached.";
+                    }
+                    // __debugS(PSTR("%s"), smuffVersion.c_str());
+                }
+            }
+        }
+        snprintf_P(info, ArraySize(info)-1, "%s V%s\n%s", MCUTYPE, VERSION, smuffVersion.c_str());
+        sendResponse(200, MIME_TEXT, String(info));
+    });
     webServer.on("/debug", HTTP_GET, []() {
-        __debugS(PSTR("/debug requested; URI: %s"),webServer.uri().c_str());
+        // __debugS(PSTR("/debug requested; URI: %s"),webServer.uri().c_str());
         sendResponse(200, MIME_TEXT, String(debugOut.toString()));
         debugOut.clear();
     });
